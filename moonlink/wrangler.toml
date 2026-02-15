@@ -1,7 +1,0 @@
-name = "moonlink"
-main = "worker.js"
-compatibility_date = "2024-01-01"
-
-[[kv_namespaces]]
-binding = "LINKS"
-id = "d0c6e476865a4143b9d1c686776c8de9"
