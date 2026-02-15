@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MoonLink — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ─── RESET & BASE ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:        #07070d;
+  --surface:   #0f0f1a;
+  --surface2:  #161624;
+  --border:    #1e1e30;
+  --border2:   #2a2a40;
+  --accent:    #7c6dfa;
+  --accent2:   #a78bfa;
+  --green:     #22d3a0;
+  --red:       #ff4d6d;
+  --yellow:    #fbbf24;
+  --text:      #e4e4f0;
+  --muted:     #6b6b8a;
+  --muted2:    #9090b0;
+  --font:      'Syne', sans-serif;
+  --mono:      'JetBrains Mono', monospace;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  min-height: 100vh;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* Subtle grid background */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(124,109,250,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,109,250,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ─── LOGIN SCREEN ──────────────────────────────────────────────────── */
+#login-screen {
+  position: fixed; inset: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+
+.login-card {
+  width: 100%; max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 48px 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-card::before {
+  content: '';
+  position: absolute; top: -60px; right: -60px;
+  width: 180px; height: 180px;
+  background: radial-gradient(circle, rgba(124,109,250,0.2), transparent 70%);
+  pointer-events: none;
+}
+
+.login-logo {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 36px;
+}
+.login-logo .logo-mark {
+  width: 38px; height: 38px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+}
+.login-logo span {
+  font-size: 22px; font-weight: 800; letter-spacing: -0.5px;
+}
+
+.login-card h2 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+.login-card p { color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+
+.login-error {
+  background: rgba(255,77,109,0.1);
+  border: 1px solid rgba(255,77,109,0.3);
+  color: var(--red);
+  font-size: 13px; padding: 10px 14px;
+  border-radius: 8px; margin-bottom: 16px;
+  display: none;
+}
+
+/* ─── LAYOUT ────────────────────────────────────────────────────────── */
+#app { display: none; position: relative; z-index: 1; }
+
+.sidebar {
+  position: fixed; left: 0; top: 0; bottom: 0;
+  width: 220px;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  padding: 24px 16px;
+  z-index: 50;
+}
+
+.logo {
+  display: flex; align-items: center; gap: 10px;
+  padding: 0 8px;
+  margin-bottom: 32px;
+}
+.logo .logo-mark {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 15px; flex-shrink: 0;
+}
+.logo span { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 10px;
+  cursor: pointer; font-size: 14px; font-weight: 500;
+  color: var(--muted2); transition: all .15s; margin-bottom: 2px;
+  border: none; background: none; width: 100%; text-align: left;
+  font-family: var(--font);
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { background: rgba(124,109,250,0.15); color: var(--accent2); }
+.nav-item .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  background: var(--surface2);
+  border-radius: 10px;
+  font-size: 12px; color: var(--muted);
+}
+.sidebar-footer .api-url {
+  font-family: var(--mono);
+  font-size: 10px; color: var(--accent);
+  margin-top: 4px; word-break: break-all;
+}
+
+.main {
+  margin-left: 220px;
+  padding: 32px 36px;
+  max-width: 1200px;
+}
+
+/* ─── PAGE HEADER ───────────────────────────────────────────────────── */
+.page-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 28px;
+}
+.page-header h1 {
+  font-size: 28px; font-weight: 800; letter-spacing: -0.5px;
+}
+.page-header p { color: var(--muted2); font-size: 14px; margin-top: 2px; }
+
+/* ─── STATS ROW ─────────────────────────────────────────────────────── */
+.stats-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-bottom: 28px;
+}
+.stat-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px 22px;
+  position: relative; overflow: hidden;
+}
+.stat-card::after {
+  content: attr(data-icon);
+  position: absolute; right: 16px; top: 14px;
+  font-size: 24px; opacity: .2;
+}
+.stat-label { font-size: 11px; font-weight: 600; letter-spacing: .08em; color: var(--muted); text-transform: uppercase; margin-bottom: 8px; }
+.stat-value { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+.stat-value.green { color: var(--green); }
+.stat-value.accent { color: var(--accent2); }
+.stat-value.yellow { color: var(--yellow); }
+.stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+/* ─── CREATE FORM ───────────────────────────────────────────────────── */
+.create-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px; padding: 28px;
+  margin-bottom: 28px;
+}
+.section-title {
+  font-size: 14px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--muted2);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-title::before { content: ''; display: block; width: 3px; height: 14px; background: var(--accent); border-radius: 2px; }
+
+.form-grid {
+  display: grid; grid-template-columns: 1fr auto; gap: 12px;
+  align-items: start;
+}
+.form-row {
+  display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+  margin-top: 12px;
+}
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field label { font-size: 11px; font-weight: 600; color: var(--muted2); letter-spacing: .05em; text-transform: uppercase; }
+
+input[type="text"],
+input[type="url"],
+input[type="password"],
+input[type="number"],
+input[type="search"] {
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: var(--font);
+  outline: none;
+  transition: border-color .15s;
+  width: 100%;
+}
+input:focus { border-color: var(--accent); }
+input::placeholder { color: var(--muted); }
+
+/* ─── BUTTONS ───────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: 10px;
+  font-size: 14px; font-weight: 700; font-family: var(--font);
+  cursor: pointer; border: none; transition: all .15s;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: var(--accent); color: white;
+}
+.btn-primary:hover { background: #6a5de0; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0); }
+.btn-ghost {
+  background: var(--surface2); color: var(--muted2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); }
+.btn-danger { background: rgba(255,77,109,0.15); color: var(--red); border: 1px solid rgba(255,77,109,0.2); }
+.btn-danger:hover { background: rgba(255,77,109,0.25); }
+.btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+.btn-icon { padding: 7px; width: 32px; height: 32px; justify-content: center; border-radius: 8px; }
+
+/* ─── SUCCESS BANNER ────────────────────────────────────────────────── */
+.success-banner {
+  background: rgba(34,211,160,0.1);
+  border: 1px solid rgba(34,211,160,0.25);
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-top: 16px;
+  display: none;
+  animation: slideIn .2s ease;
+}
+@keyframes slideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.success-banner .short-url {
+  font-family: var(--mono);
+  font-size: 16px; font-weight: 500;
+  color: var(--green); letter-spacing: .02em;
+}
+.success-banner .copy-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 8px;
+}
+
+/* ─── LINKS TABLE ───────────────────────────────────────────────────── */
+.links-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-wrap { position: relative; }
+.search-wrap .search-icon {
+  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: 14px; pointer-events: none;
+}
+.search-wrap input { padding-left: 34px; width: 220px; }
+
+table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+th {
+  padding: 11px 20px; text-align: left;
+  font-size: 10px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+td {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+.slug-cell {
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  color: var(--accent2);
+}
+.dest-cell {
+  color: var(--muted2); max-width: 240px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 600; letter-spacing: .03em;
+}
+.badge-green { background: rgba(34,211,160,0.12); color: var(--green); }
+.badge-red   { background: rgba(255,77,109,0.12);  color: var(--red);   }
+.badge-yellow{ background: rgba(251,191,36,0.12);  color: var(--yellow);}
+.badge-purple{ background: rgba(124,109,250,0.15); color: var(--accent2);}
+
+.clicks-count {
+  font-family: var(--mono); font-size: 13px; font-weight: 500;
+  color: var(--text);
+}
+
+.actions { display: flex; gap: 6px; align-items: center; }
+
+.empty-state {
+  text-align: center; padding: 60px 20px;
+  color: var(--muted);
+}
+.empty-state .empty-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state p { font-size: 14px; }
+
+/* ─── ANALYTICS MODAL ───────────────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+
+.modal {
+  background: var(--surface); border: 1px solid var(--border2);
+  border-radius: 20px; padding: 32px;
+  width: 100%; max-width: 560px;
+  max-height: 85vh; overflow-y: auto;
+  transform: translateY(12px);
+  transition: transform .2s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 24px;
+}
+.modal-header h2 { font-size: 20px; font-weight: 800; }
+
+.analytics-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 24px;
+}
+.ana-card {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 16px;
+}
+.ana-label { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; }
+.ana-value { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+
+.countries-section h3 { font-size: 13px; font-weight: 700; color: var(--muted2); margin-bottom: 12px; text-transform: uppercase; letter-spacing: .05em; }
+.country-row {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 8px; font-size: 13px;
+}
+.country-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 6px; overflow: hidden; }
+.country-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .5s; }
+.country-count { font-family: var(--mono); font-size: 12px; color: var(--muted2); width: 32px; text-align: right; }
+
+.recent-clicks h3 { font-size: 13px; font-weight: 700; color: var(--muted2); margin: 20px 0 12px; text-transform: uppercase; letter-spacing: .05em; }
+.click-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 12px; background: var(--surface2); border-radius: 8px; margin-bottom: 6px;
+  font-size: 12px;
+}
+.click-row .click-time { color: var(--muted); font-family: var(--mono); }
+.click-row .click-country { color: var(--accent2); font-weight: 600; }
+
+/* ─── TOAST ─────────────────────────────────────────────────────────── */
+.toast-container {
+  position: fixed; bottom: 24px; right: 24px; z-index: 300;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.toast {
+  background: var(--surface2); border: 1px solid var(--border2);
+  border-radius: 10px; padding: 12px 18px;
+  font-size: 13px; font-weight: 500;
+  animation: toastIn .2s ease;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+}
+@keyframes toastIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+.toast.success { border-color: rgba(34,211,160,0.3); color: var(--green); }
+.toast.error   { border-color: rgba(255,77,109,0.3);  color: var(--red);   }
+
+/* ─── LOADING SPINNER ───────────────────────────────────────────────── */
+.spinner {
+  width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.2);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .6s linear infinite;
+  display: none;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── RESPONSIVE ────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .sidebar { width: 60px; padding: 16px 8px; }
+  .sidebar .logo span, .sidebar .nav-item span, .sidebar-footer { display: none; }
+  .main { margin-left: 60px; padding: 20px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .form-row { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ─── LOGIN ─────────────────────────────────────────────────────── -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-mark">🌙</div>
+      <span>MoonLink</span>
+    </div>
+    <h2>Admin Dashboard</h2>
+    <p>Enter your API token to manage links on short.moonim.live</p>
+    <div class="login-error" id="login-error">Invalid token. Please try again.</div>
+    <div class="field" style="margin-bottom:12px;">
+      <label>API Base URL</label>
+      <input type="url" id="api-url-input" value="https://short.moonim.live" placeholder="https://short.moonim.live">
+    </div>
+    <div class="field" style="margin-bottom:20px;">
+      <label>Admin Token</label>
+      <input type="password" id="token-input" placeholder="Enter your admin token" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;" onclick="doLogin()">
+      <span>Sign In</span>
+    </button>
+  </div>
+</div>
+
+<!-- ─── APP ───────────────────────────────────────────────────────── -->
+<div id="app">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">🌙</div>
+      <span>MoonLink</span>
+    </div>
+    <button class="nav-item active" onclick="showPage('links')">
+      <span class="nav-icon">🔗</span>
+      <span>Links</span>
+    </button>
+    <button class="nav-item" onclick="showPage('settings')">
+      <span class="nav-icon">⚙️</span>
+      <span>Settings</span>
+    </button>
+    <button class="nav-item" onclick="logout()" style="margin-top:auto;">
+      <span class="nav-icon">🚪</span>
+      <span>Sign Out</span>
+    </button>
+    <div class="sidebar-footer">
+      <div>Connected to</div>
+      <div class="api-url" id="sidebar-api-url">—</div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- LINKS PAGE -->
+    <div id="page-links">
+      <!-- Header -->
+      <div class="page-header">
+        <div>
+          <h1>Links</h1>
+          <p>Create and manage your short links</p>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-row">
+        <div class="stat-card" data-icon="🔗">
+          <div class="stat-label">Total Links</div>
+          <div class="stat-value accent" id="stat-total">—</div>
+          <div class="stat-sub">all time</div>
+        </div>
+        <div class="stat-card" data-icon="👆">
+          <div class="stat-label">Total Clicks</div>
+          <div class="stat-value green" id="stat-clicks">—</div>
+          <div class="stat-sub">across all links</div>
+        </div>
+        <div class="stat-card" data-icon="✅">
+          <div class="stat-label">Active</div>
+          <div class="stat-value" id="stat-active">—</div>
+          <div class="stat-sub">not expired</div>
+        </div>
+        <div class="stat-card" data-icon="🔒">
+          <div class="stat-label">Protected</div>
+          <div class="stat-value yellow" id="stat-protected">—</div>
+          <div class="stat-sub">with password</div>
+        </div>
+      </div>
+
+      <!-- Create Form -->
+      <div class="create-section">
+        <div class="section-title">Create Short Link</div>
+        <div class="form-grid">
+          <div class="field">
+            <label>Destination URL *</label>
+            <input type="url" id="f-destination" placeholder="https://example.com/very/long/url">
+          </div>
+          <div style="padding-top:22px;">
+            <button class="btn btn-primary" id="create-btn" onclick="createLink()">
+              <span id="create-btn-text">Shorten →</span>
+              <div class="spinner" id="create-spinner"></div>
+            </button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Custom Alias (optional)</label>
+            <input type="text" id="f-slug" placeholder="my-link (leave blank for auto)">
+          </div>
+          <div class="field">
+            <label>Password (optional)</label>
+            <input type="password" id="f-password" placeholder="Lock with password">
+          </div>
+          <div class="field">
+            <label>Expires in (days, optional)</label>
+            <input type="number" id="f-ttl" placeholder="e.g. 7 (blank = never)" min="1">
+          </div>
+        </div>
+
+        <!-- Success banner -->
+        <div class="success-banner" id="success-banner">
+          <div style="font-size:12px;color:var(--muted2);margin-bottom:4px;">✅ Link created successfully</div>
+          <div class="short-url" id="success-url"></div>
+          <div class="copy-row">
+            <button class="btn btn-ghost btn-sm" onclick="copySuccess()">Copy URL</button>
+            <span style="font-size:12px;color:var(--muted);" id="copy-confirm"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Links Table -->
+      <div class="links-section">
+        <div class="table-header">
+          <div class="section-title" style="margin:0">All Links</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <div class="search-wrap">
+              <span class="search-icon">🔍</span>
+              <input type="search" id="search-input" placeholder="Search links…" oninput="filterLinks()">
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="loadLinks()">↻ Refresh</button>
+          </div>
+        </div>
+
+        <div id="table-wrap">
+          <div class="empty-state">
+            <div class="empty-icon">🌙</div>
+            <p>Loading links…</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS PAGE -->
+    <div id="page-settings" style="display:none;">
+      <div class="page-header">
+        <div>
+          <h1>Settings</h1>
+          <p>API connection and configuration</p>
+        </div>
+      </div>
+      <div class="create-section">
+        <div class="section-title">Connection</div>
+        <div class="field" style="margin-bottom:12px;max-width:400px;">
+          <label>API Base URL</label>
+          <input type="url" id="settings-api-url">
+        </div>
+        <div class="field" style="margin-bottom:20px;max-width:400px;">
+          <label>Admin Token</label>
+          <input type="password" id="settings-token">
+        </div>
+        <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+      </div>
+      <div class="create-section" style="margin-top:16px;">
+        <div class="section-title">Worker Setup Checklist</div>
+        <div style="font-size:13px;line-height:2;color:var(--muted2);">
+          <div>1️⃣ &nbsp;Install Wrangler: <code style="color:var(--accent);background:var(--surface2);padding:2px 6px;border-radius:4px;">npm i -g wrangler</code></div>
+          <div>2️⃣ &nbsp;Create KV namespace: <code style="color:var(--accent);background:var(--surface2);padding:2px 6px;border-radius:4px;">wrangler kv:namespace create LINKS</code></div>
+          <div>3️⃣ &nbsp;Paste the KV namespace ID into <code style="color:var(--accent);background:var(--surface2);padding:2px 6px;border-radius:4px;">wrangler.toml</code></div>
+          <div>4️⃣ &nbsp;Set your admin token: <code style="color:var(--accent);background:var(--surface2);padding:2px 6px;border-radius:4px;">wrangler secret put ADMIN_TOKEN</code></div>
+          <div>5️⃣ &nbsp;Deploy: <code style="color:var(--accent);background:var(--surface2);padding:2px 6px;border-radius:4px;">wrangler deploy</code></div>
+          <div>6️⃣ &nbsp;Add custom domain in Cloudflare dashboard → Workers → short.moonim.live</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ─── ANALYTICS MODAL ──────────────────────────────────────────────── -->
+<div class="modal-overlay" id="analytics-modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Link Analytics</h2>
+      <button class="btn btn-ghost btn-sm" onclick="closeAnalyticsModal()">✕ Close</button>
+    </div>
+    <div id="analytics-content">Loading…</div>
+  </div>
+</div>
+
+<!-- ─── TOAST CONTAINER ────────────────────────────────────────────── -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────
+let STATE = {
+  apiUrl: localStorage.getItem('ml_api_url') || 'https://short.moonim.live',
+  token:  localStorage.getItem('ml_token')   || '',
+  links:  [],
+};
+
+// ─── AUTH ────────────────────────────────────────────────────────────
+async function doLogin() {
+  const urlInput   = document.getElementById('api-url-input');
+  const tokenInput = document.getElementById('token-input');
+  const errEl      = document.getElementById('login-error');
+
+  STATE.apiUrl = urlInput.value.trim().replace(/\/$/, '');
+  STATE.token  = tokenInput.value.trim();
+
+  if (!STATE.apiUrl || !STATE.token) {
+    errEl.textContent = 'Please fill in both fields.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // Test the token
+  try {
+    const res = await apiFetch('/api/links');
+    if (!res.ok) throw new Error('Unauthorized');
+
+    localStorage.setItem('ml_api_url', STATE.apiUrl);
+    localStorage.setItem('ml_token',   STATE.token);
+
+    errEl.style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('sidebar-api-url').textContent = new URL(STATE.apiUrl).hostname;
+    document.getElementById('settings-api-url').value = STATE.apiUrl;
+    document.getElementById('settings-token').value   = STATE.token;
+    loadLinks();
+  } catch(e) {
+    errEl.textContent = 'Connection failed. Check URL and token.';
+    errEl.style.display = 'block';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('ml_token');
+  STATE.token = '';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('token-input').value = '';
+}
+
+// Auto-login if token exists
+if (STATE.token && STATE.apiUrl) {
+  document.getElementById('api-url-input').value = STATE.apiUrl;
+  document.getElementById('token-input').value   = STATE.token;
+  // Trigger login silently on load
+  window.addEventListener('DOMContentLoaded', () => setTimeout(doLogin, 100));
+}
+
+// Enter key on login
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') {
+    doLogin();
+  }
+});
+
+// ─── API HELPER ──────────────────────────────────────────────────────
+function apiFetch(path, options = {}) {
+  return fetch(STATE.apiUrl + path, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${STATE.token}`,
+      ...(options.headers || {}),
+    },
+  });
+}
+
+// ─── NAVIGATION ──────────────────────────────────────────────────────
+function showPage(name) {
+  document.querySelectorAll('[id^="page-"]').forEach(el => el.style.display = 'none');
+  document.getElementById(`page-${name}`).style.display = 'block';
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ─── LOAD LINKS ──────────────────────────────────────────────────────
+async function loadLinks() {
+  try {
+    const res  = await apiFetch('/api/links');
+    const data = await res.json();
+    STATE.links = data.links || [];
+    renderLinks(STATE.links);
+    updateStats(STATE.links);
+  } catch(e) {
+    showToast('Failed to load links', 'error');
+  }
+}
+
+function updateStats(links) {
+  const totalClicks = links.reduce((s, l) => s + (l.clicks || 0), 0);
+  const active      = links.filter(l => !l.expired).length;
+  const protected_  = links.filter(l => l.password).length;
+
+  document.getElementById('stat-total').textContent     = links.length;
+  document.getElementById('stat-clicks').textContent    = totalClicks.toLocaleString();
+  document.getElementById('stat-active').textContent    = active;
+  document.getElementById('stat-protected').textContent = protected_;
+}
+
+function renderLinks(links) {
+  const wrap = document.getElementById('table-wrap');
+  if (!links.length) {
+    wrap.innerHTML = `<div class="empty-state"><div class="empty-icon">🌙</div><p>No links yet. Create your first short link above!</p></div>`;
+    return;
+  }
+
+  const rows = links.map(link => {
+    const statusBadge = link.expired
+      ? `<span class="badge badge-red">Expired</span>`
+      : `<span class="badge badge-green">Active</span>`;
+
+    const pwBadge = link.password
+      ? `<span class="badge badge-yellow">🔒 Protected</span>`
+      : '';
+
+    const expiry = link.expiresAt
+      ? `<div style="font-size:11px;color:var(--muted);margin-top:2px;">Expires ${relTime(link.expiresAt)}</div>`
+      : '';
+
+    const shortUrl = `${STATE.apiUrl}/${link.slug}`;
+
+    return `<tr>
+      <td><span class="slug-cell">${escHtml(link.slug)}</span></td>
+      <td>
+        <div class="dest-cell" title="${escHtml(link.destination)}">${escHtml(link.destination)}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">Created ${relTime(link.createdAt)}</div>
+      </td>
+      <td><span class="clicks-count">${(link.clicks||0).toLocaleString()}</span></td>
+      <td>${statusBadge} ${pwBadge}${expiry}</td>
+      <td>
+        <div class="actions">
+          <button class="btn btn-ghost btn-sm btn-icon" title="Copy short URL" onclick="copyUrl('${escHtml(shortUrl)}')">📋</button>
+          <button class="btn btn-ghost btn-sm btn-icon" title="View analytics" onclick="openAnalytics('${escHtml(link.slug)}')">📊</button>
+          <button class="btn btn-danger btn-sm btn-icon" title="Delete" onclick="deleteLink('${escHtml(link.slug)}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  wrap.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Slug</th>
+          <th>Destination</th>
+          <th>Clicks</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+function filterLinks() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const filtered = STATE.links.filter(l =>
+    l.slug.toLowerCase().includes(q) ||
+    l.destination.toLowerCase().includes(q)
+  );
+  renderLinks(filtered);
+}
+
+// ─── CREATE ──────────────────────────────────────────────────────────
+async function createLink() {
+  const destination = document.getElementById('f-destination').value.trim();
+  const slug        = document.getElementById('f-slug').value.trim();
+  const password    = document.getElementById('f-password').value.trim();
+  const ttlDays     = parseInt(document.getElementById('f-ttl').value) || null;
+
+  if (!destination) { showToast('Destination URL is required', 'error'); return; }
+
+  try { new URL(destination); } catch {
+    showToast('Please enter a valid URL (include https://)', 'error');
+    return;
+  }
+
+  setLoading(true);
+  try {
+    const res  = await apiFetch('/api/links', {
+      method: 'POST',
+      body: JSON.stringify({ destination, slug: slug || undefined, password: password || undefined, ttlDays }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed');
+
+    const shortUrl = `${STATE.apiUrl}/${data.slug}`;
+    document.getElementById('success-url').textContent = shortUrl;
+    document.getElementById('success-banner').style.display = 'block';
+    document.getElementById('copy-confirm').textContent = '';
+    document.getElementById('success-banner')._url = shortUrl;
+
+    // Clear form
+    ['f-destination','f-slug','f-password','f-ttl'].forEach(id => document.getElementById(id).value = '');
+
+    showToast('Link created! ✅', 'success');
+    loadLinks();
+  } catch(e) {
+    showToast(e.message || 'Error creating link', 'error');
+  } finally {
+    setLoading(false);
+  }
+}
+
+function setLoading(on) {
+  document.getElementById('create-btn-text').style.display = on ? 'none' : 'inline';
+  document.getElementById('create-spinner').style.display  = on ? 'block' : 'none';
+  document.getElementById('create-btn').disabled = on;
+}
+
+function copySuccess() {
+  const url = document.getElementById('success-banner')._url;
+  copyUrl(url, document.getElementById('copy-confirm'));
+}
+
+// ─── DELETE ──────────────────────────────────────────────────────────
+async function deleteLink(slug) {
+  if (!confirm(`Delete /${slug}? This cannot be undone.`)) return;
+  try {
+    const res = await apiFetch(`/api/links/${slug}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed');
+    showToast(`/${slug} deleted`, 'success');
+    loadLinks();
+  } catch(e) {
+    showToast('Error deleting link', 'error');
+  }
+}
+
+// ─── ANALYTICS ───────────────────────────────────────────────────────
+async function openAnalytics(slug) {
+  const modal = document.getElementById('analytics-modal');
+  document.getElementById('analytics-content').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted)">Loading…</div>';
+  modal.classList.add('open');
+
+  try {
+    const res  = await apiFetch(`/api/links/${slug}/analytics`);
+    const data = await res.json();
+    renderAnalytics(data);
+  } catch(e) {
+    document.getElementById('analytics-content').innerHTML = '<p style="color:var(--red)">Failed to load analytics.</p>';
+  }
+}
+
+function renderAnalytics(data) {
+  const a = data.analytics || {};
+  const countries = a.countries || {};
+  const topCountry = Object.keys(countries).sort((a,b) => countries[b]-countries[a])[0] || '—';
+  const maxCount   = Math.max(...Object.values(countries), 1);
+
+  const countryRows = Object.entries(countries)
+    .sort((a,b) => b[1]-a[1]).slice(0, 10)
+    .map(([c, n]) => `
+      <div class="country-row">
+        <span style="width:80px;font-size:13px;">${c}</span>
+        <div class="country-bar-wrap"><div class="country-bar" style="width:${Math.round(n/maxCount*100)}%"></div></div>
+        <span class="country-count">${n}</span>
+      </div>`).join('');
+
+  const recentRows = (a.recentClicks || []).slice(0,8).map(c => `
+    <div class="click-row">
+      <span class="click-country">${c.country || '?'}</span>
+      <span class="click-time">${new Date(c.timestamp).toLocaleString()}</span>
+    </div>`).join('') || '<p style="font-size:13px;color:var(--muted)">No clicks yet.</p>';
+
+  const expiryStr = data.expiresAt
+    ? `Expires ${relTime(data.expiresAt)}`
+    : 'Never expires';
+
+  document.getElementById('analytics-content').innerHTML = `
+    <div style="margin-bottom:16px;">
+      <div style="font-family:var(--mono);color:var(--accent2);font-size:16px;font-weight:500;margin-bottom:4px;">${STATE.apiUrl}/${data.slug}</div>
+      <div style="font-size:13px;color:var(--muted2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${data.destination}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;">${expiryStr}</div>
+    </div>
+    <div class="analytics-grid">
+      <div class="ana-card">
+        <div class="ana-label">Total Clicks</div>
+        <div class="ana-value" style="color:var(--green)">${(a.total||0).toLocaleString()}</div>
+      </div>
+      <div class="ana-card">
+        <div class="ana-label">Top Country</div>
+        <div class="ana-value" style="color:var(--accent2);font-size:16px;padding-top:4px;">${topCountry}</div>
+      </div>
+      <div class="ana-card">
+        <div class="ana-label">Countries</div>
+        <div class="ana-value">${Object.keys(countries).length}</div>
+      </div>
+    </div>
+    <div class="countries-section">
+      <h3>Clicks by Country</h3>
+      ${countryRows || '<p style="font-size:13px;color:var(--muted)">No data yet.</p>'}
+    </div>
+    <div class="recent-clicks">
+      <h3>Recent Clicks</h3>
+      ${recentRows}
+    </div>`;
+}
+
+function closeAnalyticsModal() {
+  document.getElementById('analytics-modal').classList.remove('open');
+}
+function closeModal(e) {
+  if (e.target.id === 'analytics-modal') closeAnalyticsModal();
+}
+
+// ─── SETTINGS ────────────────────────────────────────────────────────
+function saveSettings() {
+  STATE.apiUrl = document.getElementById('settings-api-url').value.trim().replace(/\/$/,'');
+  STATE.token  = document.getElementById('settings-token').value.trim();
+  localStorage.setItem('ml_api_url', STATE.apiUrl);
+  localStorage.setItem('ml_token',   STATE.token);
+  document.getElementById('sidebar-api-url').textContent = new URL(STATE.apiUrl).hostname;
+  showToast('Settings saved!', 'success');
+  loadLinks();
+}
+
+// ─── UTILS ───────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function relTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 0) {
+    // Future (for expiry)
+    const absDiff = -diff;
+    if (absDiff < 60000) return 'in a few seconds';
+    if (absDiff < 3600000) return `in ${Math.round(absDiff/60000)}m`;
+    if (absDiff < 86400000) return `in ${Math.round(absDiff/3600000)}h`;
+    return `in ${Math.round(absDiff/86400000)}d`;
+  }
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return `${Math.round(diff/60000)}m ago`;
+  if (diff < 86400000) return `${Math.round(diff/3600000)}h ago`;
+  return `${Math.round(diff/86400000)}d ago`;
+}
+
+async function copyUrl(url, confirmEl) {
+  try {
+    await navigator.clipboard.writeText(url);
+    if (confirmEl) { confirmEl.textContent = 'Copied!'; setTimeout(()=>confirmEl.textContent='',2000); }
+    else showToast('Copied to clipboard!', 'success');
+  } catch {
+    showToast('Copy failed — try manually', 'error');
+  }
+}
+
+let toastId = 0;
+function showToast(msg, type = 'success') {
+  const container = document.getElementById('toast-container');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+// Enter key on create form
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.activeElement && ['f-destination','f-slug','f-password','f-ttl'].includes(document.activeElement.id)) {
+    createLink();
+  }
+});
+</script>
+</body>
+</html>
